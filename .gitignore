@@ -10,4 +10,6 @@ venv/
 .venv/
 
 # Docker
-.dockerignore (если хотите)
+.dockerignore
+
+.idea
