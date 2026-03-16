@@ -1,0 +1,44 @@
+name: Deploy Telegram Bot with Postgres
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "."
+          target: "~/tg_bot"
+
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/tg_bot
+            
+            echo "BOT_API=${{ secrets.BOT_API }}" > .env
+            echo "STRATZ_API=${{ secrets.STRATZ_API }}" > .env
+            echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
+            echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            docker-compose down
+            docker-compose pull
+            docker-compose up -d --build
+            
+            
+            docker image prune -f

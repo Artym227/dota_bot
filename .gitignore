@@ -1,0 +1,13 @@
+# Секреты (теперь они живут в GitHub Secrets, локальные файлы не нужны в Git)
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Docker
+.dockerignore (если хотите)

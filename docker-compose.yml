@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./tg_bot:/var/lib/postgresql/data
+    networks:
+        - dota_net
+    healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+  bot:
+    build: .
+    restart: always
+    stop_signal: SIGINT
+    depends_on:
+      - db
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      # Бот будет подключаться к БД по имени сервиса 'db'
+      DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    networks:
+      - dota_net
+    
+
+volumes:
+  postgres_data:
+
+networks:
+  dota_net: # Явно создаем сеть для надежности
+    driver: bridge
