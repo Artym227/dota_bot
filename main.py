@@ -1,10 +1,13 @@
 import asyncio
 import logging
 import os
+import socket
 
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from sqlalchemy import select, desc
 from api_script import update_heroes_stats, scheduler
+from aiohttp import TCPConnector
 from database import init_db
 
 from aiogram import Bot, Dispatcher, types, F
@@ -18,7 +21,9 @@ from database import async_session_factory, heroes_stats, init_db, get_data
 
 logging.basicConfig(level=logging.INFO)
 
-BOT_API = os.getenv("BOT_API")
+connector = TCPConnector(family=socket.AF_INET)
+session = AiohttpSession(connector=connector)
+BOT_API = os.getenv(token = "BOT_API", session=session)
 bot = Bot(token=BOT_API)
 dp = Dispatcher()
 
