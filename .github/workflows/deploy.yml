@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -18,6 +19,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          port: 22
           source: "."
           target: "~/tg_bot"
 
@@ -31,12 +33,7 @@ jobs:
             cd ~/tg_bot
             git pull origin main
             pip install -r requirements.txt
-            echo "BOT_API=${{ secrets.BOT_API }}" >> .env
-            echo "STRATZ_API=${{ secrets.STRATZ_API }}" >> .env
-            echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" >> .env
-            echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            
             docker-compose down
             docker-compose pull
             docker-compose up -d --build
