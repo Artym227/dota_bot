@@ -13,4 +13,5 @@ venv/
 .dockerignore
 
 .idea
+.idea/
 agent.md

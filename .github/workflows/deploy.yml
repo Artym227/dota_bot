@@ -29,7 +29,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ~/tg_bot
-            
+            git pull origin main
+            pip install -r requirements.txt
             echo "BOT_API=${{ secrets.BOT_API }}" >> .env
             echo "STRATZ_API=${{ secrets.STRATZ_API }}" >> .env
             echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" >> .env
