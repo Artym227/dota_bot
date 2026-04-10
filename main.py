@@ -7,22 +7,35 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from sqlalchemy import select, desc
 from api_script import update_heroes_stats, scheduler
-from aiohttp import TCPConnector
-from database import init_db
+from aiohttp import TCPConnector, ClientTimeout
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters.command import Command
 from aiogram.types import (
-    ReplyKeyboardMarkup, 
-    KeyboardButton, 
+    ReplyKeyboardMarkup,
+    KeyboardButton,
 )
 
 from database import async_session_factory, heroes_stats, init_db, get_data
 
 logging.basicConfig(level=logging.INFO)
 
-connector = TCPConnector(family=socket.AF_INET)
-session = AiohttpSession(connector=connector)
+# Настройка TCP-соединения с keep-alive и таймаутами
+connector = TCPConnector(
+    family=socket.AF_INET,
+    keepalive=True,
+    enable_cleanup_closed=True,
+    force_close=False,
+)
+
+timeout = ClientTimeout(
+    total=300,
+    connect=10,
+    sock_read=60,
+    sock_connect=10,
+)
+
+session = AiohttpSession(connector=connector, timeout=timeout)
 BOT_API = os.getenv(token = "BOT_API", session=session)
 bot = Bot(token=BOT_API)
 dp = Dispatcher()
@@ -202,7 +215,19 @@ async def back_to_settings(message: types.Message):
 
 async def main():
     dp.startup.register(on_startup)
-    await dp.start_polling(bot)
+    
+    # Механизм переподключения при обрыве соединения
+    while True:
+        try:
+            logging.info("Запуск бота...")
+            await dp.start_polling(bot)
+        except asyncio.CancelledError:
+            logging.warning("Поллинг отменён")
+            break
+        except Exception as e:
+            logging.error(f"Соединение потеряно: {e}. Переподключение через 5 секунд...")
+            await asyncio.sleep(5)
+
 
 if __name__ == "__main__":
     try:
