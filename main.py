@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import socket
 
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
@@ -11,6 +10,7 @@ from aiohttp import TCPConnector, ClientTimeout
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters.command import Command
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
@@ -20,22 +20,7 @@ from database import async_session_factory, heroes_stats, init_db, get_data
 
 logging.basicConfig(level=logging.INFO)
 
-# Настройка TCP-соединения с keep-alive и таймаутами
-connector = TCPConnector(
-    family=socket.AF_INET,
-    enable_cleanup_closed=True,
-    force_close=False,
-)
-
-timeout = ClientTimeout(
-    total=300,
-    connect=10,
-    sock_read=60,
-    sock_connect=10,
-)
-
-session = AiohttpSession(connector=connector, timeout=timeout)
-BOT_API = os.getenv(token = "BOT_API", session=session)
+BOT_API = os.getenv("BOT_API")
 bot = Bot(token=BOT_API)
 dp = Dispatcher()
 
@@ -213,7 +198,18 @@ async def back_to_settings(message: types.Message):
 
 
 async def main():
+    import socket
     dp.startup.register(on_startup)
+    
+    # Создаём соединение внутри event loop
+    connector = TCPConnector(
+        family=socket.AF_INET,
+        enable_cleanup_closed=True,
+        force_close=False,
+    )
+    timeout = ClientTimeout(total=300, connect=10, sock_read=60, sock_connect=10)
+    session = AiohttpSession(connector=connector, timeout=timeout)
+    bot = Bot(token=BOT_API, session=session)
     
     # Механизм переподключения при обрыве соединения
     while True:
@@ -226,6 +222,8 @@ async def main():
         except Exception as e:
             logging.error(f"Соединение потеряно: {e}. Переподключение через 5 секунд...")
             await asyncio.sleep(5)
+        finally:
+            await session.close()
 
 
 if __name__ == "__main__":
