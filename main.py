@@ -23,7 +23,6 @@ logging.basicConfig(level=logging.INFO)
 # Настройка TCP-соединения с keep-alive и таймаутами
 connector = TCPConnector(
     family=socket.AF_INET,
-    keepalive=True,
     enable_cleanup_closed=True,
     force_close=False,
 )
